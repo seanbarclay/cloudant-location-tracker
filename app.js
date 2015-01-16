@@ -111,8 +111,10 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
     }
 
     function doWatch(position) {
-        var lon = Number(Math.round(position.coords.longitude + 'e' + 4) + 'e-' + 4);
-        var lat = Number(Math.round(position.coords.latitude + 'e' + 4) + 'e-' + 4);
+        // var lon = Number(Math.round(position.coords.longitude + 'e' + 4) + 'e-' + 4);
+        // var lat = Number(Math.round(position.coords.latitude + 'e' + 4) + 'e-' + 4);
+        var lon = Number(position.coords.longitude);
+        var lat = Number(position.coords.latitude);
         if ((lon == last_lon) && (lat == last_lat)) return null;
 
         last_lon = lon;
