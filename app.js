@@ -7,7 +7,6 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 
 .value("map", {})
     .value("watchID", null)
-    .value("remotedb", 'https://USERNAME:PASSWORD@USERNAME.cloudant.com/locationtracker')
     .value("num", 0)
     .value("successMessage", {})
     .value("errorMessage", "error")
@@ -52,7 +51,36 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 
 /* location-tracking.html Controller */
 
-.controller('locationTrackingController', function($scope, map, watchID, pouchLocal, num, trackingMapInitialized) {
+.controller('locationTrackingController', function($scope, map, watchID, pouchLocal, num, trackingMapInitialized, $rootScope) {
+
+    console.log("locationTrackingController");
+
+    $scope.transEnter = function() {
+        console.log("transEnter");
+    };
+
+    $scope.transLeave = function() {
+        console.log("transEnter");
+    };
+    
+    var emitEnterListener = $rootScope.$on("event.enterComplete", function() {
+        $scope.enterEventHandler();
+        emitEnterListener();
+    });
+
+    $scope.enterEventHandler = function() {
+        console.log("enter is done");
+    };
+
+    $scope.leaveEventHandler = function() {
+        console.log("leave is done");
+    };
+
+    var emitLeaveListener = $rootScope.$on("event.leaveComplete", function() {
+        $scope.leaveEventHandler();
+        emitLeaveListener();
+    });
+
 
     var osmUrl = 'https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png';
     var osmAttrib = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
@@ -103,11 +131,14 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
         var radius = e.accuracy / 2;
         L.marker(e.latlng).addTo(map);
         lc.start();
+        map.off('locationfound');
     }
 
     function onLocationError(e) {
-        console.log("onLocationError");
-        alert("Rut ro... " + e.message);
+        console.log("onLocationError", e);
+        map.off('locationerror');
+
+        // alert("Rut ro... " + e.message);
     }
 
     function doWatch(position) {
@@ -178,7 +209,17 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
     });
 })
 
-.controller('locationTrackingSaveDataController', function($scope, map, watchID, pouchLocal, remotedb, successMessage, errorMessage) {
+.controller('locationTrackingSaveDataController', function($scope, map, watchID, pouchLocal, remotedb, successMessage, errorMessage, $rootScope) {
+
+    console.log("locationTrackingSaveDataController");
+
+    $scope.transEnter = function() {
+        console.log("transEnter");
+    };
+
+    $scope.transLeave = function() {
+        console.log("transEnter");
+    };
 
     navigator.geolocation.clearWatch(watchID);
 
@@ -209,22 +250,33 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
         console.log('error replicating: ' + err);
 
         errorMessage = 'error replicating: ' + err;
-        window.location = "#/location/success";
+        window.location = "#/location/error";
     });
 })
 
 
 .controller('locationTrackingSuccessController', function($scope, successMessage) {
+    $scope.transEnter = function() {
+        console.log("transEnter");
+    };
+
+    $scope.transLeave = function() {
+        console.log("transEnter");
+    };
 
     console.log("locationTrackingSuccessController");
     console.log(successMessage);
 
     $scope.docs_written = successMessage.docs_written;
     $scope.start_time = successMessage.start_time;
+
+
 })
 
 .controller('locationTrackingErrorController', function($scope, errorMessage) {
-
+    $scope.get = function() {
+        console.log("get it together");
+    };
     console.log("locationTrackingErrorController");
     console.log(errorMessage);
 
@@ -232,11 +284,39 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 })
 
 
-.controller('mapResultController', function($scope, pouchResult, resultMapInitialized) {
+.controller('mapResultController', function($scope, pouchResult, resultMapInitialized, $rootScope) {
+
+        $scope.transEnter = function() {
+            console.log("transEnter");
+        };
+
+        $scope.transLeave = function() {
+            console.log("transEnter");
+        };
 
         console.log("mapResultController");
 
         console.log(pouchResult);
+
+
+        var emitEnterListener = $rootScope.$on("event.enterComplete", function() {
+            $scope.enterEventHandler();
+            emitEnterListener();
+        });
+
+        $scope.enterEventHandler = function() {
+            console.log("enter is done");
+        };
+
+        $scope.leaveEventHandler = function() {
+            console.log("leave is done");
+        };
+
+        var emitLeaveListener = $rootScope.$on("event.leaveComplete", function() {
+            $scope.leaveEventHandler();
+            emitLeaveListener();
+        });
+
 
         var db = pouchResult;
         db.changes({
@@ -295,35 +375,35 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 
 /* Directive used on controller items to allow for multiple trans in/out */
 
-.directive('locationdirective', ['$animate', '$timeout',
-    function($animate, $timeout) {
+.directive('locationdirective', ['$animate', '$timeout', '$rootScope',
+    function($animate, $timeout, $rootScope) {
         console.log("directive");
         return {
             restrict: 'A',
             link: function(scope, element, attrs) {
-                console.log("directive 2");
-                console.log(scope, element, attrs);
                 $timeout(function() {
-
                     console.log('directive triggering inner animation');
-                    $animate.addClass(element, 'anim-page-transition-js', function() {
-                        console.log('animation complete!');
-                    });
 
+                    // $animate.enter(element, element.parent()).then(function() {
+                    //     console.log('ngAnimate.enter callback fired');
+                    // });
+
+                    $animate.addClass(element, 'anim-page-transition-js', $rootScope);
                 }, 10);
-
             }
         }
     }
 ])
 
-.animation('.anim-page-transition-js',
-    function() {
+.animation('.anim-page-transition-js', ['$rootScope',
+    function($rootScope) {
         return {
+
             enter: function(element, done) {
-                console.log('route enter animation triggered');
 
                 var _element = $(element);
+
+                console.log($rootScope, 'route enter animation triggered');
                 $.each([".trans-step1", ".trans-step2", ".trans-step3", ".trans-step4"], function(index, value) {
                     _element.find(value)
                         .velocity({
@@ -363,7 +443,6 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         queue: false,
                         complete: function(elements) {
                             console.log('enter complete');
-                            done();
                         }
                     });
 
@@ -383,6 +462,8 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         queue: false,
                         complete: function(elements) {
                             console.log('enter trans-button complete');
+                            // $rootScope.$emit("event.enterComplete");
+                            angular.element(_element).scope().transEnter();
                             done();
                         }
                     });
@@ -409,7 +490,6 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         delay: 0,
                         complete: function(elements) {
                             console.log('leave trans-button complete');
-                            done();
                         }
                     });
 
@@ -454,11 +534,14 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         // begin: function(elements) {}
                         complete: function(elements) {
                             console.log('leave complete');
-                            $(element).remove();
+                            // $rootScope.$emit("event.leaveComplete");
+                            angular.element(_element).scope().transLeave();
                             done();
+                            $(element).remove();
+
                         }
                     });
             }
         }
     }
-);
+]);
