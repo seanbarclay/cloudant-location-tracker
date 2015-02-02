@@ -38,7 +38,7 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
         controller: 'locationTrackingErrorController'
     }).
     when('/map', {
-        templateUrl: 'map.html',
+        templateUrl: 'tutorial2-map.html',
         controller: 'mapResultController'
     }).
     otherwise({
