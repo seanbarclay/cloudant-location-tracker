@@ -116,6 +116,7 @@ a, a:hover, a:active {
 pre {
     margin-bottom: 20px;
 }
+
 /* WELCOME PAGE*/
 
 .content-table {
@@ -250,6 +251,7 @@ pre {
     left: 0;
     right: 0;
     overflow: hidden;
+    opacity: 0;
 }
 .anim-page-transition-js {
     display: block;

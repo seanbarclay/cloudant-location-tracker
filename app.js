@@ -7,7 +7,6 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 
 .value("map", {})
     .value("watchID", null)
-    .value("remotedb", 'https://USERNAME:PASSWORD@USERNAME.cloudant.com/locationtracker')
     .value("num", 0)
     .value("successMessage", {})
     .value("errorMessage", "error")
@@ -19,7 +18,8 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 
     $routeProvider.
     when('/welcome', {
-        templateUrl: 'location-welcome.html'
+        templateUrl: 'location-welcome.html',
+        controller: 'locationWelcomeController'
     }).
     when('/tracking', {
         templateUrl: 'location-tracking.html',
@@ -48,24 +48,27 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 }])
 
 
+/* location-welcome.html Controller */
+
+.controller('locationWelcomeController', function($scope) {
+    $scope.transEnter = function() {}
+    $scope.transLeave = function() {};
+})
+
+
 /* location-tracking.html Controller */
 
 .controller('locationTrackingController', function($scope, map, watchID, pouchLocal, num) {
 
-    console.log("locationTrackingController");
-
-    var mapTracker = {};
+    var mapTracker;
+    var lc;
     var last_lon = 0;
     var last_lat = 0;
     var session_id = guid();
     var db = pouchLocal;
 
     $scope.transEnter = function() {
-        console.log("transEnter");
-
         if (navigator.geolocation) {
-            console.log("Geolocation is available");
-
             var osmUrl = 'https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png';
             var osmAttrib = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
                 '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
@@ -96,8 +99,6 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
             watchID = navigator.geolocation.watchPosition(doWatch, watchError);
 
             mapTracker.on('locationfound', onLocationFound);
-            mapTracker.on('locationerror', onLocationError);
-
             mapTracker.on('startfollowing', function() {
                 mapTracker.on('dragstart', lc._stopFollowing, lc);
             }).on('stopfollowing', function() {
@@ -110,20 +111,13 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
     };
 
     $scope.transLeave = function() {
-        console.log("transLeave");
         mapTracker.remove();
     };
 
     function onLocationFound(e) {
-        console.log("onLocationFound");
         var radius = e.accuracy / 2;
         L.marker(e.latlng).addTo(mapTracker);
         lc.start();
-    }
-
-    function onLocationError(e) {
-        console.log("onLocationError", e);
-        mapTracker.off('locationerror');
     }
 
     function doWatch(position) {
@@ -156,8 +150,7 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                 if (err) {
                     console.log('ERROR: ' + err);
                 }
-
-                console.log('GOT: ' + JSON.stringify(doc));
+                // console.log('GOT: ' + JSON.stringify(doc));
                 $('.longitude-coordinate').text(doc.geometry.coordinates[0]);
                 $('.latitude-coordinate').text(doc.geometry.coordinates[1]);
             });
@@ -183,102 +176,78 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
         }
         return _p8() + _p8(true) + _p8(true) + _p8();
     }
-
-
 })
 
 .controller('locationTrackingSaveDataController', function($scope, map, watchID, pouchLocal, remotedb, successMessage, errorMessage) {
 
-    console.log("locationTrackingSaveDataController");
+    var timer;
 
     $scope.transEnter = function() {
-        console.log("transEnter");
+        navigator.geolocation.clearWatch(watchID);
+        db = pouchLocal;
+
+        timer = setInterval(function() {
+            $(".dot-anim")
+                .velocity("transition.slideUpBigIn", {
+                    drag: true
+                })
+                .delay(750)
+                .velocity({
+                    opacity: 0
+                }, 750)
+        }, 2000);
+
+        db.replicate.to(remotedb).on('complete', function(info) {
+            var timer = setTimeout(function() {
+                successMessage.docs_written = info.docs_written;
+                successMessage.start_time = info.start_time;
+                window.location = "#/success";
+            }, 2000)
+
+        }).on('error', function(err) {
+            console.log('error replicating: ' + err);
+
+            errorMessage = 'error replicating: ' + err;
+            window.location = "#/error";
+        });
     };
 
     $scope.transLeave = function() {
         console.log("transLeave");
+        clearInterval(timer);
     };
-
-    navigator.geolocation.clearWatch(watchID);
-
-    db = pouchLocal;
-
-    setInterval(function() {
-        $(".dot-anim")
-            .velocity("transition.slideUpBigIn", {
-                drag: true
-            })
-            .delay(750)
-            .velocity({
-                opacity: 0
-            }, 750)
-    }, 2000);
-
-    db.replicate.to(remotedb).on('complete', function(info) {
-
-        console.log("replicate complete");
-
-        setTimeout(function() {
-            successMessage.docs_written = info.docs_written;
-            successMessage.start_time = info.start_time;
-            window.location = "#/success";
-        }, 2000)
-
-    }).on('error', function(err) {
-        console.log('error replicating: ' + err);
-
-        errorMessage = 'error replicating: ' + err;
-        window.location = "#/error";
-    });
 })
 
 
 .controller('locationTrackingSuccessController', function($scope, successMessage) {
-    $scope.transEnter = function() {
-        console.log("transEnter");
-    };
-
-    $scope.transLeave = function() {
-        console.log("transLeave");
-    };
-
-    console.log("locationTrackingSuccessController");
-    console.log(successMessage);
-
     $scope.docs_written = successMessage.docs_written;
     $scope.start_time = successMessage.start_time;
 
-
+    $scope.transEnter = function() {};
+    $scope.transLeave = function() {};
 })
 
 .controller('locationTrackingErrorController', function($scope, errorMessage) {
-    $scope.get = function() {
-        console.log("get it together");
-    };
-    console.log("locationTrackingErrorController");
-    console.log(errorMessage);
-
     $scope.error_message = errorMessage;
+
+    $scope.transEnter = function() {};
+    $scope.transLeave = function() {};
 })
 
 
 .controller('mapResultController', function($scope, pouchResult) {
-
         var mapResult = {};
 
         $scope.transEnter = function() {
-            console.log("transEnter");
-
             var db = pouchResult;
+
             db.changes({
                 include_docs: true,
                 live: true
             }).on('change', updateMovingLayer);
 
-
             mapResult = new L.Map('mapResult');
             resultMapInitialized = true;
-
 
             L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
                 maxZoom: 20,
@@ -313,17 +282,11 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                     mapResult.fitBounds(movementLayer.getBounds());
                 }
             }
-
         };
 
         $scope.transLeave = function() {
-            console.log("transLeave");
             mapResult.remove();
         };
-
-        console.log("mapResultController");
-        console.log(pouchResult);
-
 
     })
     .factory('pouchLocal', [function() {
@@ -340,21 +303,9 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 
 .directive('animationdirective', ['$animate', '$timeout',
     function($animate, $timeout) {
-        console.log("directive");
         return {
             restrict: 'A',
             link: function(scope, element, attrs) {
-
-                // $(".btn").on("touchstart", function() {
-                //     $(this).addClass("mobileHoverFix");
-                //     // alert("touchstart");
-                // });
-                // $(".btn").on("touchend", function() {
-                //     $(this).removeClass("mobileHoverFix");
-                //     // alert("touchend");
-                // });
-
-                // $(".btn").css("background-color","inherit");
 
                 $('.trans-button .btn').hover(
                     function() {
@@ -365,13 +316,7 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                     }
                 );
 
-
                 $timeout(function() {
-                    console.log('directive triggering inner animation');
-                    // $animate.enter(element, element.parent()).then(function() {
-                    //     console.log('ngAnimate.enter callback fired');
-                    // });
-
                     $animate.addClass(element, 'anim-page-transition-js');
                 }, 10);
             }
@@ -384,9 +329,8 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
         return {
 
             enter: function(element, done) {
-
                 var _element = $(element);
-
+                _element.addClass("visible");
                 $.each([".trans-step1", ".trans-step2", ".trans-step3", ".trans-step4"], function(index, value) {
                     _element.find(value)
                         .velocity({
@@ -399,7 +343,7 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                             opacity: 1,
                             translateY: "0"
                         }, {
-                            easing: "easeInOutQuad", //[0.670, 0.010, 0.090, 0.970],
+                            easing: "easeInOutQuad",
                             duration: 1000 + (index * 200),
                             delay: 1000 + (index * 100),
                             queue: false,
@@ -420,12 +364,13 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         opacity: 1,
                         translateY: "0%"
                     }, {
-                        easing: "easeInOutQuad", //[0.670, 0.010, 0.090, 0.970],
+                        easing: "easeInOutQuad",
                         duration: 500,
                         delay: 1000,
                         queue: false,
                         complete: function(elements) {
                             console.log('enter complete');
+                            angular.element(_element).scope().transEnter();
                         }
                     });
 
@@ -440,19 +385,18 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         opacity: 1,
                         translateY: "0%"
                     }, {
-                        easing: "easeInOutQuad", //[0.670, 0.010, 0.090, 0.970],
+                        easing: "easeInOutQuad",
                         delay: 1500,
                         queue: false,
                         complete: function(elements) {
                             console.log('enter trans-button complete');
-                            angular.element(_element).scope().transEnter();
+
                         }
                     });
             },
             leave: function(element, done) {
-                console.log('route leave animation triggered');
                 var _element = $(element);
-
+                angular.element(_element).scope().transLeave();
                 _element.find(".trans-button")
                     .velocity({
                         opacity: 1,
@@ -464,14 +408,13 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         opacity: 0,
                         translateY: "+100%"
                     }, {
-                        easing: "easeInOutQuad", //[0.670, 0.010, 0.090, 0.970],
+                        easing: "easeInOutQuad",
                         duration: 1500,
                         delay: 0,
                         complete: function(elements) {
                             console.log('leave trans-button complete');
                         }
                     });
-
 
                 $.each([".trans-step1", ".trans-step2", ".trans-step3", ".trans-step4"], function(index, value) {
                     _element.find(value)
@@ -485,7 +428,7 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                             opacity: 0,
                             translateY: "-200px"
                         }, {
-                            easing: "easeInOutQuad", //[0.670, 0.010, 0.090, 0.970],
+                            easing: "easeInOutQuad",
                             duration: 1000 + (index * 200),
                             delay: (index * 100),
                             queue: false,
@@ -506,14 +449,12 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                         opacity: 0,
                         translateY: "-100%"
                     }, {
-                        easing: "easeInOutQuad", //[0.670, 0.010, 0.090, 0.970],
+                        easing: "easeInOutQuad",
                         duration: 1000,
                         delay: 1000,
                         queue: false,
-                        // begin: function(elements) {}
                         complete: function(elements) {
                             console.log('leave complete');
-                            angular.element(_element).scope().transLeave();
                             $(element).remove();
                         }
                     });
