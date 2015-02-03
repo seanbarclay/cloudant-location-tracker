@@ -1,6 +1,7 @@
 /* BASIC STYLINGS
 ============================================================================= */
-*,*:before, *:after  {
+
+*, *:before, *:after {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -11,10 +12,10 @@ html, body {
 body {
     margin: 0;
     font-family: 'helvetica-neue', helvetica;
-    color: white;
+    color: #f2f2f2;
     background: #245a85;
     font-size: 14px;
-    line-height: 1.4;
+    line-height: 1.6;
 }
 nav {
     display: block;
@@ -40,24 +41,23 @@ nav {
     display: table;
 }
 #cloudant-logo {
-    background: url('../images/Cloudant_Icon_RGB.png') no-repeat center center;
-    width: 36px;
-    height: 36px;
+    background: url('../images/sprite.png') no-repeat -178px 0px;
+    width: 44px;
+    height: 44px;
     position: absolute;
     display: inline-block;
-    -0-background-size: cover;
     -moz-background-size: cover;
     -webkit-background-size: cover;
     background-size: cover;
-    top: 6px;
-    left: 4px;
+    top: 2px;
+    left: 6px;
 }
 nav .page-title {
     position: relative;
     height: inherit;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 400;
-    color: white;
+    color: #bababa;
     display: block;
     text-align: center;
     line-height: 48px;
@@ -80,11 +80,10 @@ a, a:hover, a:active {
     border: 1px solid transparent;
     white-space: nowrap;
     padding: 24px;
-    font-size: 16px;
-    line-height: 1.42857143;
-    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
     border-radius: 0;
-    color: #fff;
+    color: #f2f2f2;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -116,7 +115,6 @@ a, a:hover, a:active {
 pre {
     margin-bottom: 20px;
 }
-
 /* WELCOME PAGE*/
 
 .content-table {
@@ -129,6 +127,7 @@ pre {
     vertical-align: middle;
 }
 .directional-copy {
+    font-size: 14px;
     color: #6fc4e8;
     text-align: center;
 }
@@ -162,12 +161,12 @@ pre {
     height: auto;
     display: block;
     top: 0px;
-    bottom: 192px;
+    bottom: 189px;
     position: absolute;
     width: 100%;
 }
 #mapResult.result {
-    bottom: 72px;
+    bottom: 69px;
 }
 .location-tracker-bottom {
     position: absolute;
@@ -179,7 +178,7 @@ pre {
     width: 100%;
     display: table;
     height: 120px;
-    background-color: white;
+    background-color: #f2f2f2;
 }
 .longitude, .latitude {
     vertical-align: middle;
@@ -200,9 +199,11 @@ pre {
     font-weight: 200;
 }
 .save-data {
+    top: -14px;
     position: relative;
     display: block;
     height: 260px;
+    z-index: 3;
 }
 .save-data .cloudant-icon {
     background: url('../images/sprite.png') no-repeat -55px 0px;
@@ -262,7 +263,7 @@ pre {
     display: block;
     position: relative;
     width: 340px;
-    overflow: hidden;
+    overflow-x: hidden;
     left: 50%;
     margin-left: -170px;
 }
@@ -286,40 +287,47 @@ pre {
 .message .error-icon {
     background: url('../images/sprite.png') no-repeat -346px 0px;
 }
+.message .success-message {
+    color: #6fc4e8;
+    font-size: 14px;
+}
 .message h3 {
     margin: 0 0 20px 0;
     padding-bottom: 12px;
-    font-size: 44px;
+    font-size: 32px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .message span {
     font-size: 24px;
     font-weight: bold;
+    color: #f2f2f2;
 }
 .globe h1 {
-    top: 60px;
+    top: 74px;
     z-index: 2;
     text-align: center;
     position: inherit;
-    font-size: 44px;
+    font-size: 36px;
     text-shadow: 2px 2px 0 rgba(0, 0, 0, .4);
     display: block;
 }
 .globe .location-exclamation {
     display: block;
     position: absolute;
-    right: 48px;
-    top: -13px;
+    left: 50%;
+    top: -78px;
+    margin-left: -20px;
 }
-.globe .exclamation {
+.globe .location-icon {
     background: url('../images/sprite.png') no-repeat center left;
     top: 10px;
+    margin-top: 21px;
 }
-.globe .dot {
+.globe .location-dot {
     background: url('../images/sprite.png') no-repeat -260px 0px;
-    top: -20px;
+    top: -24px;
 }
-.globe .exclamation, .globe .dot, .message .success-icon, .message .error-icon {
+.globe .location-icon, .globe .location-dot, .message .success-icon, .message .error-icon {
     width: 43px;
     height: 52px;
     -moz-background-size: cover;
@@ -354,6 +362,44 @@ pre {
 .globe-mask, .globe-map {
     position: absolute;
     display: block;
+}
+/* Leaflet Control Overrides */
+
+.leaflet-control-container .leaflet-control-locate a {
+    margin-left: 0px;
+}
+.leaflet-control-container .leaflet-bar {
+    border-radius: 0;
+}
+.leaflet-control-container .leaflet-bar a, .leaflet-control-container .leaflet-bar a:hover {
+    border-radius: 0;
+    background-color: #222b33;
+    border-bottom: none;
+    width: 38px;
+    height: 38px;
+    line-height: 34px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: #bababa;
+    font-size: 32px;
+}
+.leaflet-control-container .leaflet-bar a.leaflet-disabled {
+    cursor: default;
+    background-color: #404E5B;
+    background-color: #222b33;
+}
+.leaflet-control-container .leaflet-bar a:first-child, .leaflet-control-container .leaflet-bar a:last-child {
+    border-radius: 0;
+}
+.leaflet-control-container .leaflet-control-locate.active.following a {
+    color: #e5603d;
+}
+.leaflet-control-container .leaflet-control-locate.active a {
+    color: #3a8cc0;
+}
+.leaflet-control-container .fa {
+    font-size: 22px;
 }
 /* Globe LOOP */
 
