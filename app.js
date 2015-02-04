@@ -7,10 +7,10 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
 
 .value("map", {})
     .value("watchID", null)
+    .value("remotedb", 'https://USERNAME:PASSWORD@USERNAME.cloudant.com/locationtracker')
     .value("num", 0)
     .value("successMessage", {})
     .value("errorMessage", "error")
-
 
 /* ROUTES */
 
@@ -66,16 +66,20 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
     var last_lat = 0;
     var session_id = guid();
     var db = pouchLocal;
+    var watchID = {};
+
 
     $scope.transEnter = function() {
         if (navigator.geolocation) {
-            var osmUrl = 'https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png';
+
+            var osmUrl = 'https://{s}.tiles.mapbox.com/v4/seanbarclay.l4eh1584/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic2VhbmJhcmNsYXkiLCJhIjoiczRkNnhOSSJ9.YzW0U9hStsqXMH-GNSxfJw';
             var osmAttrib = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
                 '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
                 'Imagery © <a href="http://mapbox.com">Mapbox</a>';
             var osm = new L.TileLayer(osmUrl, {
-                attribution: osmAttrib,
-                id: 'examples.map-i875mjb7'
+                attribution: osmAttrib
+                    // ,
+                    // id: 'examples.map-i875mjb7'
             });
 
             mapTracker = new L.Map('map', {
@@ -96,7 +100,8 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                 maxZoom: 20
             });
 
-            watchID = navigator.geolocation.watchPosition(doWatch, watchError);
+            geoLoc = navigator.geolocation;
+            watchID = geoLoc.watchPosition(doWatch, watchError);
 
             mapTracker.on('locationfound', onLocationFound);
             mapTracker.on('startfollowing', function() {
@@ -111,24 +116,44 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
     };
 
     $scope.transLeave = function() {
+        geoLoc.clearWatch(watchID);
         mapTracker.remove();
     };
 
     function onLocationFound(e) {
         var radius = e.accuracy / 2;
-        L.marker(e.latlng).addTo(mapTracker);
+        L.marker(e.latlng).addTo(mapTracker).bindPopup(
+            '<span>Latitude&nbsp;&nbsp;</span>' + e.latlng.lat +
+            '<br><span>Longitude&nbsp;&nbsp;</span>' + e.latlng.lng);
+
         lc.start();
     }
 
     function doWatch(position) {
         var lon = Number(Math.round(position.coords.longitude + 'e' + 4) + 'e-' + 4);
         var lat = Number(Math.round(position.coords.latitude + 'e' + 4) + 'e-' + 4);
-        // var lon = Number(position.coords.longitude);
-        // var lat = Number(position.coords.latitude);
         if ((lon == last_lon) && (lat == last_lat)) return null;
+
+        if (last_lon == 0) {
+            last_lon = lon;
+            last_lat = lat;
+        }
+
+        var pointA = new L.LatLng(last_lat, last_lon);
+        var pointB = new L.LatLng(lat, lon);
+        var pointList = [pointA, pointB];
 
         last_lon = lon;
         last_lat = lat;
+
+        var firstpolyline = new L.Polyline(pointList, {
+            color: '#e5603d',
+            weight: 4,
+            opacity: 0.64,
+            smoothFactor: 1
+        });
+        firstpolyline.addTo(mapTracker);
+
         var coord = {
             "type": "Feature",
             "geometry": {
@@ -242,28 +267,54 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
             var db = pouchResult;
 
             db.changes({
-                include_docs: true,
-                live: true
+                include_docs: true
             }).on('change', updateMovingLayer);
 
             mapResult = new L.Map('mapResult');
             resultMapInitialized = true;
 
-            L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.tiles.mapbox.com/v4/seanbarclay.l4eh1584/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic2VhbmJhcmNsYXkiLCJhIjoiczRkNnhOSSJ9.YzW0U9hStsqXMH-GNSxfJw', {
                 maxZoom: 20,
                 attribution: 'Map data &copy; ' +
                     '<a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
                     '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-                detectRetina: true,
-                id: 'examples.map-20v6611k'
+                detectRetina: true
+                    // ,
+                    // id: 'examples.map-20v6611k'
             }).addTo(mapResult);
+
+
+            var last_lat = 0;
+            var last_lon = 0;
+
 
             var movementLayer = L.geoJson(null, {
                 pointToLayer: function(feature, latlng) {
+
+                    if (last_lat == 0) {
+                        last_lat = latlng.lat;
+                        last_lon = latlng.lng;
+                    }
+
+                    var pointA = [last_lat, last_lon];
+                    var pointB = [latlng.lat, latlng.lng];
+                    var pointList = [pointA, pointB];
+
+                    last_lat = latlng.lat;
+                    last_lon = latlng.lng;
+
+                    var firstpolyline = new L.Polyline(pointList, {
+                        color: '#e5603d',
+                        weight: 4,
+                        opacity: 0.64,
+                        smoothFactor: 1
+                    });
+                    firstpolyline.addTo(mapResult);
+
                     markeroptions = {
                         icon: L.icon({
                             iconUrl: 'js/images/marker-icon.png',
-                            iconRetinaUrl: 'js/images/marker-icon-2x.png',
+                            iconRetinaUrl: 'js/images/marker-icon-blue-2x.png',
                             iconSize: [25, 41],
                             iconAnchor: [10, 10],
                             shadowURL: 'js/images/marker-icon-shadow.png',
@@ -272,7 +323,9 @@ angular.module('locationTrackingApp', ['ngAnimate', 'ngRoute'])
                             shadowAnchor: [10, 10]
                         })
                     }
-                    return L.marker(latlng, markeroptions);
+                    return L.marker(latlng, markeroptions).bindPopup(
+                        '<span>Latitude&nbsp;&nbsp;</span>' + latlng.lat +
+                        '<br><span>Longitude&nbsp;&nbsp;</span>' + latlng.lng);
                 }
             }).addTo(mapResult);
 

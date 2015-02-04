@@ -50,7 +50,7 @@ nav {
     -webkit-background-size: cover;
     background-size: cover;
     top: 2px;
-    left: 6px;
+    left: 5px;
 }
 nav .page-title {
     position: relative;
@@ -401,6 +401,21 @@ pre {
 .leaflet-control-container .fa {
     font-size: 22px;
 }
+.leaflet-popup-pane .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #222b33;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+}
+.leaflet-popup-pane .leaflet-popup-content-wrapper {
+    padding: 8px;
+    text-align: left;
+    border-radius: 0;
+}
+.leaflet-popup-pane span{
+    color: #999;
+    line-height: 1.6;
+}
+
+
 /* Globe LOOP */
 
 @keyframes globeLoopAnim {
