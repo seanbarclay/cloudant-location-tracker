@@ -6,8 +6,8 @@
 
             <p class="success-icon trans-step1"><!-- * --></p>
                 <h3 class="success trans-step2">Success!</h3>
-                <p class="success-message trans-step3"><span class="docs"> {{docs_written}} docs </span>
-                    <br>were replicated to your database<br>at {{start_time}} </p>
+                <p class="success-message trans-step3"><span class="docs"> {{docs_written || '0'}} docs </span>
+                    <br>were replicated to your database<br>at {{(start_time | date:'mediumDate')}} </p>
             </div>
             <div class="button-bottom trans-button">
                 <a href="#/map" class="btn btn-block btn-primary">

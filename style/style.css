@@ -271,6 +271,9 @@ pre {
     margin-top: -60px;
     height: 240px;
 }
+.globe.save-data {
+    margin-top: 20px;
+}
 .message {
     text-align: center;
     height: 320px;
@@ -410,12 +413,10 @@ pre {
     text-align: left;
     border-radius: 0;
 }
-.leaflet-popup-pane span{
+.leaflet-popup-pane span {
     color: #999;
     line-height: 1.6;
 }
-
-
 /* Globe LOOP */
 
 @keyframes globeLoopAnim {
